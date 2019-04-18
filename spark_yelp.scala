@@ -1,5 +1,5 @@
 //val file = sc.textFile("hdfs:/user/lee48493/project/academic_dataset_review.json")
-//file.map(review => review.split(",")).take(1)(0).map(x => x.split(":")(0)).foreach(println)
+//file.map(_.split(",")(7)).map(_.split(":")(1)).take(1)
 
 //average star rating
 //word count
@@ -21,6 +21,7 @@ object SparkYelp
 	val DATE: Int = 		8
 	val RATING_VALUE =		1
 	val TEXT_INFO =			1
+	val NUM_OF_PARTS =		1
 	var sc: SparkContext = _
 	def main(args: Array[String]) 
 	{
@@ -41,15 +42,16 @@ object SparkYelp
 		average_star_review.saveAsTextFile(args(1))
 
 		//Word count
+		//sc.parallelize(file.map(_.split(",")(7)).map(_.split(":")(1)).filter(_.size > 1).flatMap(_.split(" ")).filter(_.length > 2).map(_.replaceAll("""[\p{Punct}]""", "")).map(x => (x.toLowerCase,1)).reduceByKey(_+_,1).top(100)(Ordering.by(x => x._2))).saveAsTextFile("top_100_words_on_yelp")
+
 		val total_word_count = data(TEXT).map(x => x.split(":")(TEXT_INFO))
-								.filter(_.size >= 2)
+								.filter(_.length >= 2)
 								.flatMap(_.split(" "))
 								.filter(_.length > 2)
 								.map(x => x.replaceAll("""[\p{Punct}]""", ""))
-								.map(x => (x.toLowercase,1))
-								.reducebyKey(_+_)
+								.map(x => (x.toLowerCase,1))
+								.reduceByKey(_+_, NUM_OF_PARTS)
 								.top(100)(Ordering.by(x => x._2))
-								.
 
 
 		
