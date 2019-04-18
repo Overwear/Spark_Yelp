@@ -1,4 +1,4 @@
-//val file = sc.textFile("hdfs:/user/lee48493/project/academic_dataset_review.json")
+//val file = sc.textFile("hdfs:/user/lee48493/project/yelp_academic_dataset_review.json")
 //file.map(_.split(",")(7)).map(_.split(":")(1)).take(1)
 
 //average star rating
