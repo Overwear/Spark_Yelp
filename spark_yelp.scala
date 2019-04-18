@@ -20,6 +20,7 @@ object SparkYelp
 	val TEXT: Int = 		7
 	val DATE: Int = 		8
 	val RATING_VALUE =		1
+	val TEXT_INFO =			1
 	var sc: SparkContext = _
 	def main(args: Array[String]) 
 	{
@@ -31,12 +32,26 @@ object SparkYelp
 		val sparkConf = new SparkConf().setAppName("Spark Yelp")
 		val sc = new SparkContext(sparkConf)
 		val data = sc.textFile(args(0)).map(entry => entry.split(","))
+
+		//Average Star Review Across Entire DataSet
 		val star_data = data(STARS).map(x => x.split(":")(RATING_VALUE).toFloat)
 		val star_data_total = star_data.reduce(_+_)	
 		val num_of_star_reviews = star_data.count
 		val average_star_review = star_data_total/num_of_star_reviews
 		average_star_review.saveAsTextFile(args(1))
-		
+
+		//Word count
+		val total_word_count = data(TEXT).map(x => x.split(":")(TEXT_INFO))
+								.filter(_.size >= 2)
+								.flatMap(_.split(" "))
+								.filter(_.length > 2)
+								.map(x => x.replaceAll("""[\p{Punct}]""", ""))
+								.map(x => (x.toLowercase,1))
+								.reducebyKey(_+_)
+								.top(100)(Ordering.by(x => x._2))
+								.
+
+
 		
 
 			.filter(_.size > 5)
