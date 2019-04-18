@@ -42,7 +42,7 @@ object SparkYelp
 		average_star_review.saveAsTextFile(args(1))
 
 		//Word count
-		//sc.parallelize(file.map(_.split(",")(7)).map(_.split(":")(1)).filter(_.size > 1).flatMap(_.split(" ")).filter(_.length > 2).map(_.replaceAll("""[\p{Punct}]""", "")).map(x => (x.toLowerCase,1)).reduceByKey(_+_,1).top(100)(Ordering.by(x => x._2))).saveAsTextFile("top_100_words_on_yelp")
+		//sc.parallelize(file.map(_.split(",")(7)).map(_.split(":")(1)).filter(_.size > 1).flatMap(_.split(" ")).filter(_.length > 2).map(_.replaceAll("""[\p{Punct}]""", "")).map(x => (x.toLowerCase,1)).reduceByKey(_+_,1).top(100)(Ordering.by(x => x._2)), 1).saveAsTextFile("top_100_words_on_yelp")
 
 		val total_word_count = data(TEXT).map(x => x.split(":")(TEXT_INFO))
 								.filter(_.length >= 2)
