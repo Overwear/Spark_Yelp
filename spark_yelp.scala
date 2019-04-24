@@ -1,4 +1,4 @@
-//val file = sc.textFile("hdfs:/user/lee48493/project/yelp_academic_dataset_review.json")
+//val file = sc.textFile("hdfs:/user/lee48493/project/academic_dataset_review.json")
 //file.map(_.split(",")(7)).map(_.split(":")(1)).take(1)
 
 //average star rating
@@ -41,6 +41,24 @@ object SparkYelp
 		val average_star_review = star_data_total/num_of_star_reviews
 		average_star_review.saveAsTextFile(args(1))
 
+		//List of stop words
+		//source: https://www.geeksforgeeks.org/removing-stop-words-nltk-python/
+		val stop_words = List("a","about","above","after","again","against","all","am","an","and","any","are",
+								"aren't","as","at","be","because","been","before","being","below","between","both",
+								"but","by","can't","cannot","could","couldn't","did","didn't","do","does","doesn't",
+								"doing","don't","down","during","each","few","for","from","further","had","hadn't","has",
+								"hasn't","have","haven't","having","he","he'd","he'll","he's","her","here","here's",
+								"hers","herself","him","himself","his","how","how's","i","i'd","i'll","i'm","i've",
+								"if","in","into","is","isn't","it","it's","its","itself","let's","me","more","most",
+								"mustn't","my","myself","no","nor","not","of","off","on","once","only","or","other",
+								"ought","our","ours","ourselves","out","over","own","same","shan't","she","she'd",
+								"she'll","she's","should","shouldn't","so","some","such","than","that","that's","the",
+								"their","theirs","them","themselves","then","there","there's","these","they","they'd",
+								"they'll","they're","they've","this","those","through","to","too","under","until","up",
+								"very","was","wasn't","we","we'd","we'll","we're","we've","were","weren't","what","what's",
+								"when","when's","where","where's","which","while","who","who's","whom","why","why's",
+								"with","won't","would","wouldn't","you","you'd","you'll","you're","you've","your",
+								"yours","yourself","yourselves")
 		//Word count
 		//sc.parallelize(file.map(_.split(",")(7)).map(_.split(":")(1)).filter(_.size > 1).flatMap(_.split(" ")).filter(_.length > 2).map(_.replaceAll("""[\p{Punct}]""", "")).map(x => (x.toLowerCase,1)).reduceByKey(_+_,1).top(100)(Ordering.by(x => x._2)), 1).saveAsTextFile("top_100_words_on_yelp")
 
