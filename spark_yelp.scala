@@ -23,7 +23,7 @@ object SparkYelp
 	val RATING_VALUE =		1
 	val TEXT_INFO =			1
 	val NUM_OF_PARTS =		1
-	var sc: SparkContext = _
+
 	def main(args: Array[String]) 
 	{
 		if (args.length < 3) 
@@ -33,14 +33,16 @@ object SparkYelp
 		}
 		val sparkConf = new SparkConf().setAppName("Spark Yelp")
 		val sc = new SparkContext(sparkConf)
-		val data = sc.textFile(args(0)).map(entry => entry.split(","))
+		val data = sc.textFile(args(0))
 
 		//Average Star Review Across Entire DataSet
-		val star_data = data(STARS).map(x => x.split(":")(RATING_VALUE).toFloat)
+		val star_data = data.map(entry => entry.split(",")(STARS))
+							.map(x => x.split(":")(RATING_VALUE).toFloat)
+
 		val star_data_total = star_data.reduce(_+_)	
 		val num_of_star_reviews = star_data.count
 		val average_star_review = star_data_total/num_of_star_reviews
-		average_star_review.saveAsTextFile(args(1))
+		println(average_star_review)
 
 		//List of stop words
 		//source: https://www.geeksforgeeks.org/removing-stop-words-nltk-python/
@@ -60,31 +62,32 @@ object SparkYelp
 								"when","when's","where","where's","which","while","who","who's","whom","why","why's",
 								"with","won't","would","wouldn't","you","you'd","you'll","you're","you've","your",
 								"yours","yourself","yourselves")
+		
+		//Prepping the data for word count
+		val data_prep = data.map(entry => entry.split(",")(TEXT))
+							.map(x => x.split(":")(TEXT_INFO))
+							.filter(_.length >= 2)
+							.flatMap(_.split(" "))
+							.filter(_.length > 2)
+							.map(x => x.replaceAll("""[\p{Punct}]""", ""))
+
 		//Word count
 		//sc.parallelize(file.map(_.split(",")(7)).map(_.split(":")(1)).filter(_.size > 1).flatMap(_.split(" ")).filter(_.length > 2).map(_.replaceAll("""[\p{Punct}]""", "")).map(x => (x.toLowerCase,1)).reduceByKey(_+_,1).top(100)(Ordering.by(x => x._2)), 1).saveAsTextFile("top_100_words_on_yelp")
-
-		val total_word_count = data(TEXT).map(x => x.split(":")(TEXT_INFO))
-								.filter(_.length >= 2)
-								.flatMap(_.split(" "))
-								.filter(_.length > 2)
-								.map(x => x.replaceAll("""[\p{Punct}]""", ""))
-								.map(x => (x.toLowerCase,1))
-								.reduceByKey(_+_, NUM_OF_PARTS)
-								.top(100)(Ordering.by(x => x._2))
+		val total_word_count = data_prep.map(x => (x.toLowerCase,1))
+										.reduceByKey(_+_, NUM_OF_PARTS)
+										.top(100)(Ordering.by(x => x._2))
 
 		//Word count with stop words removed
 		//sc.parallelize(file.map(_.split(",")(7)).map(_.split(":")(1)).filter(_.size > 1).flatMap(_.split(" ")).filter(_.length > 2).map(_.replaceAll("""[\p{Punct}]""", "")).map(x => x.toLowerCase).filter(x => !stop_words.contains(x)).map(x => (x,1)).reduceByKey(_+_,1).top(100)(Ordering.by(x => x._2)), 1).take(20)
-		val sw_total_word_count = data(TEXT).map(x => x.split(":")(TEXT_INFO))
-								.filter(_.length >= 2)
-								.flatMap(_.split(" "))
-								.filter(_.length > 2)
-								.map(x => x.replaceAll("""[\p{Punct}]""", ""))
-								.map(x => x.toLowerCase)
-								.filter(x => !stop_words.contains(x))
-								.map(x => (x,1))
-								.reduceByKey(_+_, NUM_OF_PARTS)
-								.top(100)(Ordering.by(x => x._2))
+		val sw_total_word_count = data_prep.map(x => x.toLowerCase)
+											.filter(x => !stop_words.contains(x))
+											.map(x => (x,1))
+											.reduceByKey(_+_, NUM_OF_PARTS)
+											.top(100)(Ordering.by(x => x._2))
 
-		System.exit(0)}}
+		//Savefiles
+		sc.parallelize(total_word_count, NUM_OF_PARTS).saveAsTextFile(args(1) + "/word_count")
+		sc.parallelize(sw_total_word_count, NUM_OF_PARTS).saveAsTextFile(args(1) + "/stopwords_word_count")
+		System.exit(0)
 	}
 }
