@@ -35,16 +35,15 @@ object SparkYelp
 		val sc = new SparkContext(sparkConf)
 		val data = sc.textFile(args(0))
 
-		//Average Star Review Across Entire DataSet
+		/********************Average Star Review Across Entire DataSet********************/
 		val star_data = data.map(entry => entry.split(",")(STARS))
 							.map(x => x.split(":")(RATING_VALUE).toFloat)
 
 		val star_data_total = star_data.reduce(_+_)	
 		val num_of_star_reviews = star_data.count
 		val average_star_review = star_data_total/num_of_star_reviews
-		println(average_star_review)
 
-		//List of stop words
+		/********************List of stop words********************/
 		//source: https://www.geeksforgeeks.org/removing-stop-words-nltk-python/
 		val stop_words = List("a","about","above","after","again","against","all","am","an","and","any","are",
 								"arent","as","at","be","because","been","before","being","below","between","both",
@@ -63,7 +62,7 @@ object SparkYelp
 								"with","wont","would","wouldnt","you","you'd","youll","youre","youve","your",
 								"yours","yourself","yourselves")
 		
-		//Prepping the data for word count
+		/********************Prepping the data for word count********************/
 		val data_prep = data.map(entry => entry.split(",")(TEXT))
 							.map(x => x.split(":")(TEXT_INFO))
 							.filter(_.length >= 2)
@@ -71,13 +70,13 @@ object SparkYelp
 							.filter(_.length > 2)
 							.map(x => x.replaceAll("""[\p{Punct}]""", ""))
 
-		//Word count
+		/********************Word count********************/
 		//sc.parallelize(file.map(_.split(",")(7)).map(_.split(":")(1)).filter(_.size > 1).flatMap(_.split(" ")).filter(_.length > 2).map(_.replaceAll("""[\p{Punct}]""", "")).map(x => (x.toLowerCase,1)).reduceByKey(_+_,1).top(100)(Ordering.by(x => x._2)), 1).saveAsTextFile("top_100_words_on_yelp")
 		val total_word_count = data_prep.map(x => (x.toLowerCase,1))
 										.reduceByKey(_+_, NUM_OF_PARTS)
 										.top(100)(Ordering.by(x => x._2))
 
-		//Word count with stop words removed
+		/********************Word count with stop words removed********************/
 		//sc.parallelize(file.map(_.split(",")(7)).map(_.split(":")(1)).filter(_.size > 1).flatMap(_.split(" ")).filter(_.length > 2).map(_.replaceAll("""[\p{Punct}]""", "")).map(x => x.toLowerCase).filter(x => !stop_words.contains(x)).map(x => (x,1)).reduceByKey(_+_,1).top(100)(Ordering.by(x => x._2)), 1).take(20)
 		val sw_total_word_count = data_prep.map(x => x.toLowerCase)
 											.filter(x => !stop_words.contains(x))
@@ -85,7 +84,12 @@ object SparkYelp
 											.reduceByKey(_+_, NUM_OF_PARTS)
 											.top(100)(Ordering.by(x => x._2))
 
-		//Savefiles
+		/********************Filter useful reviews and a********************/
+		//file.map(_.split(",")(5)).map(_.split(":")(1)).take(100)
+		val 
+
+		/********************Savefiles********************/
+		sc.parallelize(average_star_review, NUM_OF_PARTS).saveAsTextFile(args(1) + "/average_star_review")
 		sc.parallelize(total_word_count, NUM_OF_PARTS).saveAsTextFile(args(1) + "/word_count")
 		sc.parallelize(sw_total_word_count, NUM_OF_PARTS).saveAsTextFile(args(1) + "/stopwords_word_count")
 		System.exit(0)
