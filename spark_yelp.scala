@@ -84,13 +84,6 @@ object SparkYelp
 								.map(x => (x,1))
 								.reduceByKey(_+_, NUM_OF_PARTS)
 								.top(100)(Ordering.by(x => x._2))
-		
-
-			.filter(_.size > 5)
-			.map(x => (x(STOCK_SYMBOL), (x(HIGH_PRICE).toFloat - x(LOW_PRICE).toFloat) * 100 / x(LOW_PRICE).toFloat))
-			.reduceByKey(Math.max(_, _), args(2).toInt)
-			.sortByKey(ascending = true)
-			.saveAsTextFile(args(1))
 
 		System.exit(0)}}
 	}
