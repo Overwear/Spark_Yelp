@@ -1,4 +1,5 @@
-//val file = sc.textFile("hdfs:/user/lee48493/project/academic_dataset_review.json")
+//spark-shell --executor-memory 8G --num-executors 4 --executor-cores 8
+//val file = sc.textFile("hdfs:/user/lee48493/project/yelp_academic_dataset_review.json")
 //file.map(_.split(",")(7)).map(_.split(":")(1)).take(1)
 
 //average star rating
@@ -71,7 +72,18 @@ object SparkYelp
 								.reduceByKey(_+_, NUM_OF_PARTS)
 								.top(100)(Ordering.by(x => x._2))
 
-
+		//Word count with stop words removed
+		//sc.parallelize(file.map(_.split(",")(7)).map(_.split(":")(1)).filter(_.size > 1).flatMap(_.split(" ")).filter(_.length > 2).map(_.replaceAll("""[\p{Punct}]""", "")).map(x => x.toLowerCase).filter(x => !stop_words.contains(x)).map(x => (x,1)).reduceByKey(_+_,1).top(100)(Ordering.by(x => x._2)), 1).take(20)
+		val sw_total_word_count = data(TEXT).map(x => x.split(":")(TEXT_INFO))
+								.filter(_.length >= 2)
+								.flatMap(_.split(" "))
+								.filter(_.length > 2)
+								.map(x => x.replaceAll("""[\p{Punct}]""", ""))
+								.map(x => x.toLowerCase)
+								.filter(x => !stop_words.contains(x))
+								.map(x => (x,1))
+								.reduceByKey(_+_, NUM_OF_PARTS)
+								.top(100)(Ordering.by(x => x._2))
 		
 
 			.filter(_.size > 5)
