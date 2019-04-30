@@ -84,7 +84,7 @@ object SparkYelp
 											.top(100)(Ordering.by(x => x._2))
 
 		/********************Filter useful reviews that are greater than 3 and do a word count********************/
-		//file.map(x => (x.split(",")(7).split(":")(1),x.split(",")(4).split(":")(1).toInt)).filter{ case (x,y) => y > 3}.map{ case(x,y) => x}.take(3)
+		//file.map(x => (x.split(",")(7).split(":")(1),x.split(",")(4).split(":")(1).toInt)).filter{ case (x,y) => y > 3}.map{ case(x,y) => x}.filter(x => x.length >= 2).flatMap(x => x.split(" ")).filter(x => x.length > 2).map(x => x.replaceAll("""[\p{Punct}]""", "")).map(x => (x.toLowerCase,1)).reduceByKey(_+_,1).top(100)(Ordering.by(x => x._2))
 		
 
 		/********************Savefiles********************/
