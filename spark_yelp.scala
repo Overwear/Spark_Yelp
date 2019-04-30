@@ -5,8 +5,7 @@
 //average star rating
 //word count
 //Filter useful reviews and do a word count
-//Filter funny reviews and do a word count
-//Filter cool reviews and do a word count
+
 
 import org.apache.spark.{ SparkConf, SparkContext }
 object SparkYelp 
@@ -84,9 +83,9 @@ object SparkYelp
 											.reduceByKey(_+_, NUM_OF_PARTS)
 											.top(100)(Ordering.by(x => x._2))
 
-		/********************Filter useful reviews and a********************/
-		//file.map(_.split(",")(5)).map(_.split(":")(1)).take(100)
-		val 
+		/********************Filter useful reviews that are greater than 3 and do a word count********************/
+		//file.map(x => (x.split(",")(7).split(":")(1),x.split(",")(4).split(":")(1).toInt)).filter{ case (x,y) => y > 3}.map{ case(x,y) => x}.take(3)
+		
 
 		/********************Savefiles********************/
 		sc.parallelize(average_star_review, NUM_OF_PARTS).saveAsTextFile(args(1) + "/average_star_review")
