@@ -99,11 +99,26 @@ object SparkYelp
 									.reduceByKey(_+_,NUM_OF_PARTS)
 									.top(100)(Ordering.by(x => x._2))
 
+
+		/********************Verify Work********************/
+		val df = sqlContext.read.json("hdfs:/user/lee48493/project/yelp_academic_dataset_review.json").select("text","useful").where("useful > 3")
+		val df_text = df.select("text")
+		val useful_word_count_verify = df.rdd.map(sql_row => sql_row.getString(0))
+									.flatMap(review => review.split(" "))
+									.filter(word => word.length > 2)
+									.map(word => word.replaceAll("""[\p{Punct}]""", ""))
+									.map(word => word.toLowerCase)
+									.filter(word => !stop_words.contains(word))
+									.map(word => (word,1))
+									.reduceByKey(_+_,NUM_OF_PARTS)
+									.top(100)(Ordering.by(x => x._2))
+
 		/********************Savefiles********************/
 		sc.parallelize(average_star_review, NUM_OF_PARTS).saveAsTextFile(args(1) + "/average_star_review")
 		sc.parallelize(total_word_count, NUM_OF_PARTS).saveAsTextFile(args(1) + "/word_count")
 		sc.parallelize(sw_total_word_count, NUM_OF_PARTS).saveAsTextFile(args(1) + "/stopwords_word_count")
 		sc.parallelize(useful_word_count, NUM_OF_PARTS).saveAsTextFile(args(1) + "/useful_word_count")
+		sc.parallelize(useful_word_count_verify, NUM_OF_PARTS).saveAsTextFile(args(1) + "/useful_word_count_verify")
 		System.exit(0)
 	}
 }
