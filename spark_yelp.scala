@@ -85,7 +85,7 @@ object SparkYelp
 
 		/********************Filter useful reviews that are greater than 3 and do a word count********************/
 		//file.map(x => (x.split(",")(7).split(":")(1),x.split(",")(4).split(":")(1).toInt)).filter{ case (x,y) => y > 3}.map{ case(x,y) => x}.filter(x => x.length >= 2).flatMap(x => x.split(" ")).filter(x => x.length > 2).map(x => x.replaceAll("""[\p{Punct}]""", "")).map(x => (x.toLowerCase,1)).reduceByKey(_+_,1).top(100)(Ordering.by(x => x._2))
-		val useful_word_count = data.map(json_obj => (json_obj.split(",")(TEXT).map(x => x.split(":")(TEXT_INFO)),
+		val useful_word_count = data.map(json_obj => ((json_obj.split(",")(TEXT).split(":")(TEXT_INFO)),
 													json_obj.split(",")(USEFUL).split(":")(RATING_VALUE).toInt))
 									.filter{ case (review,useful_rating) => useful_rating > 3}
 									.map{ case (review, useful_rating) => review}
@@ -114,7 +114,7 @@ object SparkYelp
 									.top(100)(Ordering.by(x => x._2))
 
 		/********************Savefiles********************/
-		sc.parallelize(average_star_review, NUM_OF_PARTS).saveAsTextFile(args(1) + "/average_star_review")
+		sc.parallelize(average_star_review.toString(), NUM_OF_PARTS).saveAsTextFile(args(1) + "/average_star_review")
 		sc.parallelize(total_word_count, NUM_OF_PARTS).saveAsTextFile(args(1) + "/word_count")
 		sc.parallelize(sw_total_word_count, NUM_OF_PARTS).saveAsTextFile(args(1) + "/stopwords_word_count")
 		sc.parallelize(useful_word_count, NUM_OF_PARTS).saveAsTextFile(args(1) + "/useful_word_count")
