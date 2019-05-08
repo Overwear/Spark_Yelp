@@ -35,7 +35,7 @@ object SparkYelp
 		val data = sc.textFile(args(0))
 
 		/********************Average Star Review Across Entire DataSet********************/
-		val star_data = data.map(entry => entry.split(",(?=([\"])")(STARS))
+		val star_data = data.map(entry => entry.split(",(?=([\"]))")(STARS))
 							.map(x => x.split(":")(RATING_VALUE).toFloat)
 
 		val star_data_total = star_data.reduce(_+_)	
@@ -48,7 +48,7 @@ object SparkYelp
 		
 		/********************Prepping the data for word count********************/
 		val data_prep = data.map(entry => entry.split(",(?=([\"]))")(TEXT))
-							.map(x => x.split(":")(TEXT_INFO))
+							.map(x => x.split(":\"")(TEXT_INFO))
 							.filter(_.length >= 2)
 							.flatMap(_.split(" "))
 							.filter(_.length > 2)
@@ -70,11 +70,11 @@ object SparkYelp
 
 		/********************Filter useful reviews that are greater than 3 and do a word count********************/
 		//file.map(x => (x.split(",(?=([\"]))")(7).split(":")(1),x.split(",")(4).split(":")(1).toInt)).filter{ case (x,y) => y > 3}.map{ case(x,y) => x}.filter(x => x.length >= 2).flatMap(x => x.split(" ")).filter(x => x.length > 2).map(x => x.replaceAll("""[\p{Punct}]""", "")).map(x => (x.toLowerCase,1)).reduceByKey(_+_,1).top(100)(Ordering.by(x => x._2))
-		val useful_word_count = data.map(json_obj => ((json_obj.split(",(?=([\"]))")(TEXT).split(":")(TEXT_INFO)),
+		val useful_word_count = data.map(json_obj => ((json_obj.split(",(?=([\"]))")(TEXT).split(":\"")(TEXT_INFO)),
 													json_obj.split(",")(USEFUL).split(":")(RATING_VALUE).toInt))
 									.filter{ case (review,useful_rating) => useful_rating > 3}
 									.map{ case (review, useful_rating) => review}
-									.filter(review => review.length >= 2 && word(0).isLetter)
+									.filter(review => review.length >= 2)
 									.flatMap(review => review.split(" "))
 									.filter(word => word.length > 2)
 									.map(word => word.replaceAll("""[\p{Punct}]""", ""))
@@ -86,9 +86,10 @@ object SparkYelp
 
 
 		/********************Verify Work********************/
-		//val useful_word_count_verify = sqlContext.read.json("hdfs:/user/lee48493/project/yelp_academic_dataset_review.json").select("text","useful").where("useful > 3").select("text").rdd.map(x => x.getString(0)).filter(x => x.length>= 2).flatMap(x => x.split(" ")).filter(x => x.length > 2 && x(0).isLetter).map(x => x.replaceAll("""[\p{Punct}]""", "")).map(x => x.toLowerCase).filter(x => !stop_words.contains(x)).map(x => (x,1)).reduceByKey(_+_,1).top(100)(Ordering.by(x => x._2))
-		val df = sqlContext.read.json("hdfs:/user/lee48493/project/yelp_academic_dataset_review.json").select("text","useful").where("useful > 3")
-		val df_text = df.select("text")
+		//val useful_word_count_verify = sqlContext.jsonFile("hdfs:/user/lee48493/project/yelp_academic_dataset_review.json").select("text","useful").where("useful > 3").select("text").rdd.map(x => x.getString(0)).filter(x => x.length>= 2).flatMap(x => x.split(" ")).filter(x => x.length > 2 && x(0).isLetter).map(x => x.replaceAll("""[\p{Punct}]""", "")).map(x => x.toLowerCase).filter(x => !stop_words.contains(x)).map(x => (x,1)).reduceByKey(_+_,1).top(100)(Ordering.by(x => x._2))
+		val sqlContext = new org.apache.spark.sql.SQLContext(sc)
+		val df = sqlContext.jsonFile("hdfs:/user/lee48493/project/yelp_academic_dataset_review.json")
+		val df_text = (df.select("text","useful").where(df("useful") > 3).select("text"))
 		val useful_word_count_verify = df_text.rdd.map(sql_row => sql_row.getString(0))
 									.flatMap(review => review.split(" "))
 									.filter(word => word.length >= 2 && word(0).isLetter)
@@ -98,7 +99,7 @@ object SparkYelp
 									.map(word => (word,1))
 									.reduceByKey(_+_,NUM_OF_PARTS)
 									.top(100)(Ordering.by(x => x._2))
-
+    
 		/********************Savefiles********************/
 		sc.parallelize(average_star_review.toString(), NUM_OF_PARTS).saveAsTextFile(args(1) + "/average_star_review")
 		sc.parallelize(total_word_count, NUM_OF_PARTS).saveAsTextFile(args(1) + "/word_count")
