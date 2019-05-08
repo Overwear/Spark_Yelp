@@ -74,7 +74,7 @@ object SparkYelp
 													json_obj.split(",")(USEFUL).split(":")(RATING_VALUE).toInt))
 									.filter{ case (review,useful_rating) => useful_rating > 3}
 									.map{ case (review, useful_rating) => review}
-									.filter(review => review.length >= 2)
+									.filter(review => review.length >= 2 && word(0).isLetter)
 									.flatMap(review => review.split(" "))
 									.filter(word => word.length > 2)
 									.map(word => word.replaceAll("""[\p{Punct}]""", ""))
@@ -91,7 +91,7 @@ object SparkYelp
 		val df_text = df.select("text")
 		val useful_word_count_verify = df_text.rdd.map(sql_row => sql_row.getString(0))
 									.flatMap(review => review.split(" "))
-									.filter(word => word.length > 2 && word(0).isLetter)
+									.filter(word => word.length >= 2 && word(0).isLetter)
 									.map(word => word.replaceAll("""[\p{Punct}]""", ""))
 									.map(word => word.toLowerCase)
 									.filter(word => !stop_words.contains(word))
